@@ -1,5 +1,8 @@
 # linger
 
+[![CI](https://github.com/freedit-org/linger/actions/workflows/ci.yml/badge.svg)](https://github.com/freedit-org/linger/actions/workflows/ci.yml)
+[![release](https://github.com/freedit-org/linger/actions/workflows/release.yml/badge.svg)](https://github.com/freedit-org/linger/releases)
+
 A simple, cross-platform, text-based utility for working with dictionaries written in Rust. Based on the api service <https://dictionaryapi.dev/>.
 
 ```
