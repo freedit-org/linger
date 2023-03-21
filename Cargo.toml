@@ -1,0 +1,18 @@
+[package]
+name = "linger"
+version = "0.0.1"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+bincode = "2.0.0-rc.2"
+dirs = "5"
+serde = { version = "*", features = ["derive"] }
+sled = { version = "0.34.7" }
+ureq = { version = "*", default-features = false, features = ["tls", "json"] }
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
