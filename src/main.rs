@@ -1,9 +1,17 @@
+use anyhow::Result;
 use bincode::{config::standard, Decode, Encode};
 use serde::Deserialize;
-use std::{fmt::Display, io, time::Duration};
+use sled::Db;
+use std::{env::args, fmt::Display, io, time::Duration};
 use ureq::Agent;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
+    let args: Vec<_> = args().collect();
+    if args.len() != 2 {
+        println!("Usage: linger <word> or linger -i");
+        return Ok(());
+    }
+
     let config_dir = dirs::config_local_dir().expect("Couldn't get local config directory");
     let config_path = config_dir.join("linger");
     let config = sled::Config::default().path(config_path);
@@ -14,37 +22,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .timeout_write(Duration::from_secs(8))
         .build();
 
-    // let word = std::env::args().nth(1).expect("Usage: ric <word>");
+    let mode = &args[1];
+    if mode == "-i" {
+        loop {
+            println!("Enter word: ('e'/'exit' to quit)");
+            let mut word = String::new();
+            io::stdin()
+                .read_line(&mut word)
+                .expect("Failed to read line");
 
-    loop {
-        println!("Enter word: ('e'/'exit' to quit)");
-        let mut word = String::new();
-        io::stdin()
-            .read_line(&mut word)
-            .expect("Failed to read line");
+            if word.trim() == "exit" || word.trim() == "e" {
+                println!("Goodbye!");
+                break;
+            }
 
-        if word.trim() == "exit" || word.trim() == "e" {
-            println!("Goodbye!");
-            break;
+            match get_words(&word, &db, agent.clone()) {
+                Ok(words) => words.iter().for_each(|w| println!("{w}")),
+                Err(e) => eprintln!("{e}"),
+            }
         }
-
-        let words = if let Some(v) = db.get(&word)? {
-            let (decoded, _): (Vec<Word>, usize) = bincode::decode_from_slice(&v, standard())?;
-            decoded
-        } else {
-            let url = format!("https://api.dictionaryapi.dev/api/v2/entries/en/{word}");
-            let web = agent.get(&url).call()?.into_json()?;
-            let encoded = bincode::encode_to_vec(&web, standard())?;
-            db.insert(word, encoded)?;
-            web
-        };
-
-        for i in words {
-            println!("{i}")
-        }
+    } else {
+        let words = get_words(mode, &db, agent)?;
+        words.iter().for_each(|w| println!("{w}"));
     }
 
     Ok(())
+}
+
+fn get_words(word: &str, db: &Db, agent: Agent) -> Result<Vec<Word>> {
+    if let Some(v) = db.get(word)? {
+        let (decoded, _): (Vec<Word>, usize) = bincode::decode_from_slice(&v, standard())?;
+        Ok(decoded)
+    } else {
+        let url = format!("https://api.dictionaryapi.dev/api/v2/entries/en/{word}");
+        let web = agent.get(&url).call()?.into_json()?;
+        let encoded = bincode::encode_to_vec(&web, standard())?;
+        db.insert(word, encoded)?;
+        Ok(web)
+    }
 }
 
 impl Display for Word {

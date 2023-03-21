@@ -1,10 +1,11 @@
 [package]
 name = "linger"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT"
 
 [dependencies]
+anyhow = "1.0"
 bincode = "2.0.0-rc.2"
 dirs = "5"
 serde = { version = "*", features = ["derive"] }

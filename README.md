@@ -5,8 +5,15 @@
 
 A simple, cross-platform, text-based utility for working with dictionaries written in Rust. Based on the api service <https://dictionaryapi.dev/>.
 
+## Usage
+
+* Intervative mode: `./linger -i`
+* Direct mode: `./linger <word>`
+
+tips: use `./linger <word> | less` for long page.
+
 ```
-> ./linger
+> ./linger -i
 Input the word: ('e'/'exit' to quit)
 
 rust
