@@ -7,7 +7,7 @@ A simple, cross-platform, text-based utility for working with dictionaries writt
 
 ## Usage
 
-* Intervative mode: `./linger -i`
+* Interactive mode: `./linger -i`
 * Direct mode: `./linger <word>`
 
 tips: use `./linger <word> | less` for long page.
