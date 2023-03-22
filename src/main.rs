@@ -1,5 +1,6 @@
 use anyhow::Result;
 use bincode::{config::standard, Decode, Encode};
+use colored::Colorize;
 use serde::Deserialize;
 use sled::Db;
 use std::{env::args, fmt::Display, io, time::Duration};
@@ -64,11 +65,11 @@ fn get_words(word: &str, db: &Db, agent: Agent) -> Result<Vec<Word>> {
 
 impl Display for Word {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "== {} ==\n", self.word)?;
+        writeln!(f, "== {} ==\n", self.word.bold().bright_green().underline())?;
 
         for p in &self.phonetics {
             if let Some(text) = &p.text {
-                writeln!(f, "{}", text)?;
+                writeln!(f, "{}", text.bright_yellow())?;
             }
 
             writeln!(f, "{}", p.audio)?;
@@ -77,9 +78,9 @@ impl Display for Word {
         writeln!(f)?;
 
         for m in &self.meanings {
-            writeln!(f, "【{}】", m.part_of_speech)?;
+            writeln!(f, "【{}】", m.part_of_speech.bright_green())?;
             for (i, d) in m.definitions.iter().enumerate() {
-                writeln!(f, "{i}. {}", d.definition)?;
+                writeln!(f, "{i}. {}", d.definition.bright_white())?;
                 if !d.antonyms.is_empty() {
                     writeln!(f, "antonyms: {:?}", d.antonyms)?;
                 }
