@@ -9,7 +9,11 @@ use ureq::Agent;
 fn main() -> Result<()> {
     let args: Vec<_> = args().collect();
     if args.len() != 2 {
-        println!("Usage: linger <word> or linger -i");
+        println!(
+            "Usage: {} or {}",
+            "linger <word>".yellow(),
+            "linger -i".yellow()
+        );
         return Ok(());
     }
 
@@ -39,7 +43,7 @@ fn main() -> Result<()> {
 
             match get_words(&word, &db, agent.clone()) {
                 Ok(words) => words.iter().for_each(|w| println!("{w}")),
-                Err(e) => eprintln!("{e}"),
+                Err(e) => eprintln!("{}", e.to_string().red()),
             }
         }
     } else {
