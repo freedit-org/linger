@@ -1,8 +1,8 @@
 use anyhow::Result;
 use bincode::{config::standard, Decode, Encode};
 use colored::Colorize;
+use fjall::{Config, PartitionCreateOptions, PartitionHandle};
 use serde::Deserialize;
-use sled::Db;
 use std::{env::args, fmt::Display, io, time::Duration};
 use ureq::Agent;
 
@@ -19,13 +19,14 @@ fn main() -> Result<()> {
 
     let config_dir = dirs::config_local_dir().expect("Couldn't get local config directory");
     let config_path = config_dir.join("linger");
-    let config = sled::Config::default().path(config_path);
-    let db = config.open()?;
+    let ks = Config::new(config_path).open()?;
+    let words: fjall::PartitionHandle =
+        ks.open_partition("words", PartitionCreateOptions::default())?;
 
-    let agent: Agent = ureq::AgentBuilder::new()
-        .timeout_read(Duration::from_secs(8))
-        .timeout_write(Duration::from_secs(8))
+    let config = Agent::config_builder()
+        .timeout_global(Some(Duration::from_secs(8)))
         .build();
+    let agent: Agent = config.into();
 
     let mode = &args[1];
     if mode == "-i" {
@@ -37,32 +38,32 @@ fn main() -> Result<()> {
                 .expect("Failed to read line");
 
             if word.trim() == "exit" || word.trim() == "e" {
-                println!("Goodbye!");
+                println!("GooKeyspaceye!");
                 break;
             }
 
-            match get_words(&word, &db, agent.clone()) {
+            match get_words(&word, &words, agent.clone()) {
                 Ok(words) => words.iter().for_each(|w| println!("{w}")),
                 Err(e) => eprintln!("{}", e.to_string().red()),
             }
         }
     } else {
-        let words = get_words(mode, &db, agent)?;
+        let words = get_words(mode, &words, agent)?;
         words.iter().for_each(|w| println!("{w}"));
     }
 
     Ok(())
 }
 
-fn get_words(word: &str, db: &Db, agent: Agent) -> Result<Vec<Word>> {
-    if let Some(v) = db.get(word)? {
+fn get_words(word: &str, ph: &PartitionHandle, agent: Agent) -> Result<Vec<Word>> {
+    if let Some(v) = ph.get(word)? {
         let (decoded, _): (Vec<Word>, usize) = bincode::decode_from_slice(&v, standard())?;
         Ok(decoded)
     } else {
         let url = format!("https://api.dictionaryapi.dev/api/v2/entries/en/{word}");
-        let web = agent.get(&url).call()?.into_json()?;
+        let web = agent.get(&url).call()?.body_mut().read_json()?;
         let encoded = bincode::encode_to_vec(&web, standard())?;
-        db.insert(word, encoded)?;
+        ph.insert(word, encoded)?;
         Ok(web)
     }
 }
@@ -117,8 +118,8 @@ struct Word {
     #[serde(rename(deserialize = "sourceUrls"))]
     source_urls: Vec<String>,
 }
-#[derive(Debug, Deserialize, Decode, Encode)]
 
+#[derive(Debug, Deserialize, Decode, Encode)]
 struct License {
     name: String,
     url: String,

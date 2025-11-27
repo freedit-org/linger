@@ -6,12 +6,12 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
-bincode = "2.0.0-rc.3"
-colored = "2"
-dirs = "5"
-serde = { version = "*", features = ["derive"] }
-sled = { version = "0.34.7" }
-ureq = { version = "*", default-features = false, features = ["tls", "json"] }
+bincode = "2.0.1"
+colored = "3.0.0"
+dirs = "6.0.0"
+fjall = "2"
+serde = { version = "1", features = ["derive"] }
+ureq = { version = "3", features = ["json"] }
 
 [profile.release]
 lto = true
